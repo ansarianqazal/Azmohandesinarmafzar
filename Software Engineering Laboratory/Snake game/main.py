@@ -174,64 +174,100 @@ def cell_center(segment):
 
 
 def draw_snake():
-    """مار را با بدن پیوسته، قطعه‌های گرد، فلس، چشم و زبان رسم می‌کند."""
+    """مار را با بدن فلس‌دار و بندبند، سر پهن و دم باریک رسم می‌کند."""
     centers = [cell_center(part) for part in snake]
+    if not centers:
+        return
 
-    # بدن اصلی؛ خط ضخیم باعث می‌شود قطعه‌ها به هم متصل دیده شوند.
-    if len(centers) > 1:
-        pygame.draw.lines(screen, (105, 48, 25), False, centers[::-1], 21)
-        pygame.draw.lines(screen, (232, 137, 45), False, centers[::-1], 15)
+    # هر قطعه بدن به شکل بیضی مستقل رسم می‌شود تا ظاهر کرمی و یک‌تکه نداشته باشد.
+    # جهت هر قطعه از موقعیت قطعه بعدی به دست می‌آید.
+    for index in range(len(centers) - 1, 0, -1):
+        x, y = centers[index]
+        previous = centers[index - 1]
+        vx = previous[0] - x
+        vy = previous[1] - y
 
-    # حلقه‌های بدن و فلس‌های کوچک
-    for index, center in enumerate(centers[1:], start=1):
-        pygame.draw.circle(screen, (174, 83, 29), center, 10)
-        pygame.draw.circle(screen, (246, 174, 73), center, 7)
-        if index % 2 == 0:
-            pygame.draw.circle(
-                screen, (105, 48, 25),
-                (center[0], center[1] - 2), 2
-            )
+        # دم به‌تدریج باریک می‌شود.
+        taper = max(0.42, 1.0 - (index / max(1, len(centers))) * 0.48)
+        half_w = int(9 * taper)
+        half_h = int(8 * taper)
+        if abs(vx) >= abs(vy):
+            body_rect = pygame.Rect(0, 0, CELL_SIZE - 3, max(8, half_h * 2))
+        else:
+            body_rect = pygame.Rect(0, 0, max(8, half_w * 2), CELL_SIZE - 3)
+        body_rect.center = (x, y)
 
-    # سر مار
-    head = centers[0]
-    pygame.draw.circle(screen, (130, 57, 27), head, 12)
-    pygame.draw.circle(screen, (255, 190, 91), head, 9)
+        # سایه و رنگ اصلی بدن
+        pygame.draw.ellipse(screen, (83, 35, 24), body_rect.inflate(2, 2))
+        pygame.draw.ellipse(screen, (190, 91, 34), body_rect)
 
-    # جای چشم‌ها با توجه به جهت حرکت تعیین می‌شود.
+        # فلس‌های مورب تیره روی هر بند
+        scale_color = (105, 48, 28)
+        if abs(vx) >= abs(vy):
+            pygame.draw.line(screen, scale_color, (x - 3, y - 5), (x + 1, y + 5), 2)
+            pygame.draw.line(screen, (255, 181, 83), (x - 7, y - 3), (x - 4, y + 3), 1)
+        else:
+            pygame.draw.line(screen, scale_color, (x - 5, y - 2), (x + 5, y + 2), 2)
+            pygame.draw.line(screen, (255, 181, 83), (x - 3, y - 6), (x + 3, y - 4), 1)
+
+    # گردن کوتاه و کمی باریک‌تر، برای جدا شدن بصری سر از بدن
+    head_x, head_y = centers[0]
+    neck = centers[1] if len(centers) > 1 else (
+        head_x - direction[0] * CELL_SIZE,
+        head_y - direction[1] * CELL_SIZE
+    )
+    pygame.draw.line(screen, (105, 43, 23), neck, (head_x, head_y), 15)
+    pygame.draw.line(screen, (205, 105, 39), neck, (head_x, head_y), 11)
+
+    # سر پهن و لوزی‌مانند؛ نوک سر در جهت حرکت قرار می‌گیرد.
     dx, dy = direction
-    if direction in (RIGHT, LEFT):
-        eye_x = head[0] + (4 if dx > 0 else -4)
-        eye_positions = [(eye_x, head[1] - 5), (eye_x, head[1] + 5)]
+    if direction == RIGHT:
+        head_points = [(head_x + 14, head_y), (head_x + 5, head_y - 11),
+                       (head_x - 9, head_y - 9), (head_x - 12, head_y),
+                       (head_x - 9, head_y + 9), (head_x + 5, head_y + 11)]
+        eyes = [(head_x + 2, head_y - 6), (head_x + 2, head_y + 6)]
+    elif direction == LEFT:
+        head_points = [(head_x - 14, head_y), (head_x - 5, head_y - 11),
+                       (head_x + 9, head_y - 9), (head_x + 12, head_y),
+                       (head_x + 9, head_y + 9), (head_x - 5, head_y + 11)]
+        eyes = [(head_x - 2, head_y - 6), (head_x - 2, head_y + 6)]
+    elif direction == UP:
+        head_points = [(head_x, head_y - 14), (head_x - 11, head_y - 5),
+                       (head_x - 9, head_y + 9), (head_x, head_y + 12),
+                       (head_x + 9, head_y + 9), (head_x + 11, head_y - 5)]
+        eyes = [(head_x - 6, head_y - 2), (head_x + 6, head_y - 2)]
     else:
-        eye_y = head[1] + (4 if dy > 0 else -4)
-        eye_positions = [(head[0] - 5, eye_y), (head[0] + 5, eye_y)]
+        head_points = [(head_x, head_y + 14), (head_x - 11, head_y + 5),
+                       (head_x - 9, head_y - 9), (head_x, head_y - 12),
+                       (head_x + 9, head_y - 9), (head_x + 11, head_y + 5)]
+        eyes = [(head_x - 6, head_y + 2), (head_x + 6, head_y + 2)]
 
-    for eye in eye_positions:
-        pygame.draw.circle(screen, WHITE, eye, 3)
-        pygame.draw.circle(screen, BLACK, eye, 1)
+    pygame.draw.polygon(screen, (83, 35, 24), head_points)
+    inner_points = [(head_x + int((px - head_x) * 0.88),
+                     head_y + int((py - head_y) * 0.88))
+                    for px, py in head_points]
+    pygame.draw.polygon(screen, (225, 132, 54), inner_points)
+    pygame.draw.polygon(screen, (255, 190, 105), head_points, 1)
 
-    # زبان دوشاخه کوچک در جلوی سر
-    tongue_start = (head[0] + dx * 10, head[1] + dy * 10)
-    tongue_end = (head[0] + dx * 16, head[1] + dy * 16)
-    pygame.draw.line(screen, RED, tongue_start, tongue_end, 2)
-    if direction in (UP, DOWN):
-        pygame.draw.line(
-            screen, RED,
-            tongue_end, (tongue_end[0] - 3, tongue_end[1] + dy * 3), 1
-        )
-        pygame.draw.line(
-            screen, RED,
-            tongue_end, (tongue_end[0] + 3, tongue_end[1] + dy * 3), 1
-        )
+    # چشم‌های جانبی و مردمک عمودی، شبیه مار
+    for ex, ey in eyes:
+        pygame.draw.circle(screen, (255, 238, 190), (ex, ey), 3)
+        pygame.draw.ellipse(screen, (25, 20, 16), (ex - 1, ey - 2, 2, 4))
+
+    # زبان قرمز دوشاخه در جلوی پوزه
+    tongue_start = (head_x + dx * 11, head_y + dy * 11)
+    tongue_tip = (head_x + dx * 19, head_y + dy * 19)
+    pygame.draw.line(screen, (190, 25, 35), tongue_start, tongue_tip, 2)
+    if dx:
+        pygame.draw.line(screen, (190, 25, 35), tongue_tip,
+                         (tongue_tip[0] + dx * 4, tongue_tip[1] - 3), 2)
+        pygame.draw.line(screen, (190, 25, 35), tongue_tip,
+                         (tongue_tip[0] + dx * 4, tongue_tip[1] + 3), 2)
     else:
-        pygame.draw.line(
-            screen, RED,
-            tongue_end, (tongue_end[0] + dx * 3, tongue_end[1] - 3), 1
-        )
-        pygame.draw.line(
-            screen, RED,
-            tongue_end, (tongue_end[0] + dx * 3, tongue_end[1] + 3), 1
-        )
+        pygame.draw.line(screen, (190, 25, 35), tongue_tip,
+                         (tongue_tip[0] - 3, tongue_tip[1] + dy * 4), 2)
+        pygame.draw.line(screen, (190, 25, 35), tongue_tip,
+                         (tongue_tip[0] + 3, tongue_tip[1] + dy * 4), 2)
 
 
 def draw_animal():
