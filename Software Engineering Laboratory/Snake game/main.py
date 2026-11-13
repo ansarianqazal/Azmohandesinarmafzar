@@ -179,23 +179,23 @@ def draw_snake():
 
     # بدن اصلی؛ خط ضخیم باعث می‌شود قطعه‌ها به هم متصل دیده شوند.
     if len(centers) > 1:
-        pygame.draw.lines(screen, (24, 105, 48), False, centers[::-1], 20)
-        pygame.draw.lines(screen, (65, 170, 82), False, centers[::-1], 15)
+        pygame.draw.lines(screen, (105, 48, 25), False, centers[::-1], 21)
+        pygame.draw.lines(screen, (232, 137, 45), False, centers[::-1], 15)
 
     # حلقه‌های بدن و فلس‌های کوچک
     for index, center in enumerate(centers[1:], start=1):
-        pygame.draw.circle(screen, (35, 135, 60), center, 10)
-        pygame.draw.circle(screen, (90, 190, 100), center, 7)
+        pygame.draw.circle(screen, (174, 83, 29), center, 10)
+        pygame.draw.circle(screen, (246, 174, 73), center, 7)
         if index % 2 == 0:
             pygame.draw.circle(
-                screen, (25, 100, 45),
+                screen, (105, 48, 25),
                 (center[0], center[1] - 2), 2
             )
 
     # سر مار
     head = centers[0]
-    pygame.draw.circle(screen, (30, 145, 58), head, 12)
-    pygame.draw.circle(screen, (90, 195, 95), head, 9)
+    pygame.draw.circle(screen, (130, 57, 27), head, 12)
+    pygame.draw.circle(screen, (255, 190, 91), head, 9)
 
     # جای چشم‌ها با توجه به جهت حرکت تعیین می‌شود.
     dx, dy = direction
