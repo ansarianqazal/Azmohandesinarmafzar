@@ -34,6 +34,53 @@ score_font = pygame.font.SysFont("Arial", 27, bold=True)
 button_font = pygame.font.SysFont("Arial", 25, bold=True)
 game_over_font = pygame.font.SysFont("Arial", 58, bold=True)
 
+# ساخت پس‌زمینه چمنی با جزئیات ثابت؛ با هر فریم دوباره محاسبه نمی‌شود.
+def create_grass_background():
+    background = pygame.Surface((WIDTH, HEIGHT))
+    background.fill((48, 112, 52))
+    texture_random = random.Random(24)
+
+    # لکه‌های بسیار ملایم برای طبیعی‌تر شدن سطح چمن
+    for _ in range(95):
+        x = texture_random.randrange(WIDTH)
+        y = texture_random.randrange(HEIGHT)
+        radius = texture_random.randrange(8, 24)
+        shade = texture_random.choice([
+            (53, 121, 56), (43, 103, 47), (61, 126, 60)
+        ])
+        pygame.draw.circle(background, shade, (x, y), radius)
+
+    # تیغه‌های کوتاه چمن
+    for _ in range(650):
+        x = texture_random.randrange(8, WIDTH - 8)
+        y = texture_random.randrange(8, HEIGHT - 8)
+        shade = texture_random.choice([
+            (91, 151, 72), (75, 139, 65), (37, 91, 43)
+        ])
+        pygame.draw.line(background, shade, (x, y), (x + 2, y - 4), 1)
+
+    # چند سنگ‌ریزه و تکه خاک کوچک
+    for _ in range(55):
+        x = texture_random.randrange(8, WIDTH - 8)
+        y = texture_random.randrange(8, HEIGHT - 8)
+        color = texture_random.choice([
+            (115, 91, 58), (137, 112, 73), (94, 85, 63)
+        ])
+        pygame.draw.circle(background, color, (x, y), 2)
+
+    # قاب ظریف دور محوطه بازی
+    pygame.draw.rect(background, (25, 72, 35), (2, 2, WIDTH - 4, HEIGHT - 4), 5)
+    pygame.draw.rect(background, (120, 163, 91), (7, 7, WIDTH - 14, HEIGHT - 14), 1)
+    return background
+
+
+grass_background = create_grass_background()
+
+
+def draw_background():
+    """پس‌زمینه چمنی آماده را روی صفحه قرار می‌دهد."""
+    screen.blit(grass_background, (0, 0))
+
 # حیوانات قابل شکار؛ امتیاز هر بار که حیوان ظاهر می‌شود تصادفی تعیین می‌شود.
 # مار ویژه بزرگ‌تر نمایش داده می‌شود و امتیاز بیشتری دارد.
 ANIMALS = [
@@ -256,7 +303,7 @@ def update_game():
 
 def draw_playing_screen():
     """صفحه بازی را با نمایش امتیاز، حیوان و مار رسم می‌کند."""
-    screen.fill(BLACK)
+    draw_background()
     score_image = score_font.render(f"Score: {score}", True, WHITE)
     screen.blit(score_image, (15, 12))
     draw_animal()
@@ -265,13 +312,17 @@ def draw_playing_screen():
 
 def draw_menu():
     """صفحه شروع را با یک دکمه نمایش می‌دهد."""
-    screen.fill(BLACK)
+    draw_background()
     draw_button(start_button, "START")
 
 
 def draw_game_over():
     """پیام پایان بازی و دکمه شروع دوباره را نمایش می‌دهد."""
-    screen.fill(BLACK)
+    draw_background()
+    # پنل تیره نیمه‌شفاف برای خوانایی پیام پایان بازی
+    panel = pygame.Surface((460, 190), pygame.SRCALPHA)
+    panel.fill((18, 48, 25, 215))
+    screen.blit(panel, panel.get_rect(center=(WIDTH // 2, HEIGHT // 2)))
     message = game_over_font.render("GAME OVER", True, RED)
     screen.blit(message, message.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 65)))
     button = pygame.Rect(WIDTH // 2 - 115, HEIGHT // 2 + 15, 230, 56)
