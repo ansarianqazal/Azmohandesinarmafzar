@@ -1,1 +1,1 @@
-pygame>=2.5.0
+# No external packages required. Uses Python standard library only.
